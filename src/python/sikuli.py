@@ -25,18 +25,20 @@ class SikuliLibrary(object):
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
     ROBOT_LIBRARY_VERSION = VERSION
 
-    def __init__(self, port=0, timeout=3.0, mode=''):
+    def __init__(self, port=0, timeout=3.0, mode='', logfiles=1):
         """
         @port: sikuli java process socket port
         @timeout: Timeout of waiting java process started
         @mode: if set as 'DOC',  will stop java process automatically, 
                if set as 'PYTHON', means library is running in out of robot environment
+        @logfiles: if set as 1 (default) logging is enabled, 0 disables logging.
         """
         self.logger = self._init_logger()
         self.timeout = float(timeout)
         if int(port) == 0:
             port = self._get_free_tcp_port()
         self.port = port
+        self.log_files_enabled = logfiles
         self._start_sikuli_java_process()
         self.remote = self._connect_remote_library()
         if mode.upper().strip() == 'DOC':
@@ -92,7 +94,10 @@ class SikuliLibrary(object):
         sikuliJar = jarList[0]
         command = 'java -jar '+sikuliJar+' %s %s' % (str(self.port), self._get_output_folder())
         process = Process()
-        process.start_process(command, shell=True, stdout=self._output_file(), stderr=self._err_file())
+        if int(self.log_files_enabled) != 1:
+            process.start_process(command, shell=True)
+        else:
+            process.start_process(command, shell=True, stdout=self._output_file(), stderr=self._err_file())
         self.logger.info('Start sikuli java process on port %s' % str(self.port))
         self._wait_process_started()
         self.logger.info('Sikuli java process is started')
